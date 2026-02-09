@@ -1,6 +1,6 @@
 #include <iostream>
 #include <CUDAMatMul/CUDAMatMul.hpp>
-#include <CPUGEMM.hpp>
+#include <CPUGEMM/CPUGEMM.hpp>
 #include <Eigen/Dense>
 
 using Eigen::MatrixXd;
@@ -37,6 +37,10 @@ int main()
 
 	std::cout << "Matrix: \n";
 	std::cout << matrix << std::endl;
+
+	CPUGEMM::Matrix<float> randMatrix = CPUGEMM::GenerateRandomMatrix<float>(16, 16, 0, 30);
+	std::cout << "Random Matrix: \n";
+	std::cout << randMatrix << std::endl;
 
 	return 0;
 }
