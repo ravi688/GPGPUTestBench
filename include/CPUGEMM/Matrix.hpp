@@ -87,6 +87,12 @@ namespace CPUGEMM
 				return m_data[index];
 			}
 
+			const std::vector<T>& operator[](std::size_t index) const
+			{
+				assert(index < m_data.size());
+				return m_data[index];
+			}
+
 			RowIterator<T> begin() { return RowIterator<T> { m_data }; }
 			RowIterator<T> end() { return RowIterator<T> { m_data, m_data.size() }; }
 
@@ -98,8 +104,8 @@ namespace CPUGEMM
 
 
 			// getters
-			std::size_t getNumRows() const noexcept { return m_data.size(); }
-			std::size_t getNumColumns() const noexcept { return m_data[0].size();  }
+			std::size_t numRows() const noexcept { return m_data.size(); }
+			std::size_t numColumns() const noexcept { return m_data[0].size();  }
 	};
 
 	template<typename T>

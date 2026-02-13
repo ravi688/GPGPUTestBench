@@ -5,6 +5,8 @@
 
 using Eigen::MatrixXd;
 
+void TestCPUGEMM();
+
 int main()
 {
 	MatrixXd m(2, 2);
@@ -42,5 +44,94 @@ int main()
 	std::cout << "Random Matrix: \n";
 	std::cout << randMatrix << std::endl;
 
+
+	TestCPUGEMM();
+
+
 	return 0;
+}
+
+template<typename T>
+MatrixXd ConvertToEigenMatrix(const CPUGEMM::Matrix<T>& m)
+{
+	MatrixXd em(m.numRows(), m.numColumns());
+	for(std::size_t i = 0; i < m.numRows(); ++i)
+	{
+		for(std::size_t j = 0; j < m.numColumns(); ++j)
+			em(i, j) = m[i][j];
+	}
+	return em;
+}
+
+template<typename T>
+CPUGEMM::Matrix<T> ConvertToCPUGEMMMatrix(const MatrixXd& m)
+{
+	CPUGEMM::Matrix<T> _m(m.rows(), m.cols());
+	for(std::size_t i = 0; i < _m.numRows(); ++i)
+	{
+		for(std::size_t j = 0; j < _m.numColumns(); ++j)
+		{
+			_m[i][j] = m(i, j);
+		}
+	}
+	return _m;
+}
+
+bool EigenEqualApprox(const MatrixXd& a, const MatrixXd& b)
+{
+	assert(a.rows() == b.rows());
+	assert(a.cols() == b.cols());
+
+	for(Eigen::Index i = 0; i < a.rows(); ++i)
+	{
+		for(Eigen::Index j = 0; j < a.cols(); ++j)
+		{
+			if(std::fabs(a(i, j) - b(i, j)) > 0.1f)
+			{
+				std::cout << a(i, j) << " != " << b(i, j) << "\n";
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+template<typename T>
+void CheckGEMM(const CPUGEMM::Matrix<T>& a, const CPUGEMM::Matrix<T>& b, const CPUGEMM::Matrix<T>& c, const CPUGEMM::Matrix<T>& d)
+{
+	MatrixXd ea = ConvertToEigenMatrix(a);
+	MatrixXd eb = ConvertToEigenMatrix(b);
+	MatrixXd ec = ConvertToEigenMatrix(c);
+	MatrixXd ed = ConvertToEigenMatrix(d);
+
+
+	MatrixXd t = ea * eb + ec;
+	CPUGEMM::Matrix<T> _t = ConvertToCPUGEMMMatrix<T>(t);
+	// std::cout << "---Eigen Matrix (D)---\n" << _t << "\n";
+	if(!EigenEqualApprox(t, ed))
+		std::cerr << "***Doesn't match with eigen's calculation***\n";
+}
+
+void TestCPUGEMM()
+{
+	std::cout << "---------------TestCPUGEMM-----------------\n";
+	auto a = CPUGEMM::GenerateRandomMatrix<float>(512, 1024, 0, 10.0);
+	auto b = CPUGEMM::GenerateRandomMatrix<float>(1024, 512, 0, 10.0);
+	auto c = CPUGEMM::GenerateRandomMatrix<float>(512, 512, 0, 10.0);
+
+	// std::cout << "---Matrix (A)---\n" << a << "\n";
+	// std::cout << "---Matrix (B)---\n" << b << "\n";
+	// std::cout << "---Matrix (C)---\n" << c << "\n";
+
+	std::cout << "---CASE 1----\n";
+	auto d = CPUGEMM::GEMM(a, b, c);
+	std::cout << "Time taken: " << d.second << " milliseconds\n";
+	std::cout << "Verifying\n";
+	CheckGEMM(a, b, c, d.first);
+
+	std::cout << "---CASE 2----\n";
+	auto d2 = CPUGEMM::GEMM2(a, b, c);
+	std::cout << "Time taken: " << d2.second << " milliseconds\n";
+	std::cout << "Verifying\n";
+	CheckGEMM(a, b, c, d2.first);
 }
