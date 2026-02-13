@@ -51,14 +51,14 @@ namespace CPUGEMM
 
 		std::vector<std::thread> threads;
 
-		constexpr auto numThreads = 12;
+		const std::size_t numThreads = std::thread::hardware_concurrency() ? std::thread::hardware_concurrency() : 4;
 		threads.reserve(numThreads);
 		auto numRowsPerThread = d.numRows() / numThreads;
 		auto numRowsForLastThread = d.numRows() % numThreads;
 
 		auto beginTime = std::chrono::steady_clock::now();
 
-		for(int n = 0; n < numThreads; ++n)
+		for(std::size_t n = 0; n < numThreads; ++n)
 		{
 			std::thread thread([numRowsPerThread, n, alpha, beta, bias, &actfn](Matrix<T>& d, const Matrix<T>& a, const Matrix<T>& b, const Matrix<T>& c)
 			{
